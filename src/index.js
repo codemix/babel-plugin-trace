@@ -82,10 +82,6 @@ export default function ({types: t, template}: PluginParams): Plugin {
   const PRESERVE_FILES = normalizeEnv(process.env.TRACE_FILE);
   const PRESERVE_LEVELS = normalizeEnv(process.env.TRACE_LEVEL);
 
-
-  console.log({PRESERVE_CONTEXTS, PRESERVE_LEVELS, PRESERVE_FILES});
-
-
   /**
    * Normalize an environment variable, used to override plugin options.
    */
@@ -143,10 +139,21 @@ export default function ({types: t, template}: PluginParams): Plugin {
     if (metadata.indent) {
       prefix += (new Array(metadata.indent + 1)).join('  ');
     }
-    return expression(`console.log(prefix, content)`)({
-      prefix: t.stringLiteral(prefix),
-      content: message.content
-    });
+    if (t.isSequenceExpression(message.content)) {
+      return t.callExpression(
+        t.memberExpression(
+          t.identifier('console'),
+          t.identifier('log')
+        ),
+        [t.stringLiteral(prefix)].concat(message.content.expressions)
+      );
+    }
+    else {
+      return expression(`console.log(prefix, content)`)({
+        prefix: t.stringLiteral(prefix),
+        content: message.content
+      });
+    }
   }
 
   function generatePrefix (dirname: string, basename: string): string {

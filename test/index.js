@@ -16,6 +16,7 @@ describe('Trace', function () {
   ok('multiple', 123);
   ok('if-statement', 123);
   ok('classes', 123);
+  ok('sequence', 123);
 });
 
 function load (basename) {
