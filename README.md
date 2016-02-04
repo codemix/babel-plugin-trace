@@ -1,4 +1,4 @@
-# Babel Contracts
+# Babel Plugin: Trace
 
 This is a [Babel](https://babeljs.io/) plugin which adds a straightforward, declarative syntax for adding debug logging to JavaScript applications.
 
