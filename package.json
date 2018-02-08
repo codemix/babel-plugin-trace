@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-trace",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Super convenient syntax for execution tracing, logging and debugging JavaScript applications via a babel plugin.",
   "main": "lib/index.js",
   "scripts": {
