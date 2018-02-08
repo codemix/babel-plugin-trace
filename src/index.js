@@ -149,9 +149,9 @@ export default function ({types: t, template}: PluginParams): Plugin {
       );
     }
     else {
-      return expression(`console.log(prefix, content)`)({
-        prefix: t.stringLiteral(prefix),
-        content: message.content
+      return expression(`console.log(PREFIX, CONTENT)`)({
+        PREFIX: t.stringLiteral(prefix),
+        CONTENT: message.content
       });
     }
   }
