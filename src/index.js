@@ -238,37 +238,29 @@ function collectMetadata (path: NodePath, opts: PluginOptions): Metadata {
 /**
  * Determine whether the given logging statement should be stripped.
  */
-function shouldStrip (name: string, metadata: Metadata, opts: PluginOptions): boolean {
-  if (!opts.strip) {
-    return false;
-  }
-  else if (opts.strip === true) {
-    return !hasStripOverride(name, metadata);
-  }
-  else if (typeof opts.strip === 'string') {
-    if (opts.strip === process.env.NODE_ENV) {
-      return !hasStripOverride(name, metadata);
+function shouldStrip (name: string, metadata: Metadata, { strip }: PluginOptions): boolean {
+  if (
+    strip && (
+      strip === true ||
+      strip === process.env.NODE_ENV ||
+      strip[process.env.NODE_ENV]
+    )
+  ) {
+    if (PRESERVE_CONTEXTS.length) {
+      const context = metadata.context.toLowerCase();
+      if (PRESERVE_CONTEXTS.some(pc => context.includes(pc))) return false;
     }
-  }
-  else if (opts.strip[process.env.NODE_ENV]) {
-    return !hasStripOverride(name, metadata);
-  }
-  return true;
-}
-
-function hasStripOverride (name: string, metadata: Metadata) {
-  if (PRESERVE_CONTEXTS.length && PRESERVE_CONTEXTS.some(context => metadata.context.toLowerCase().indexOf(context) !== -1)) {
+    if (PRESERVE_FILES.length) {
+      const filename = metadata.filename.toLowerCase();
+      if (PRESERVE_FILES.some(pf => filename.includes(pf))) return false;
+    }
+    if (PRESERVE_LEVELS.length) {
+      const level = name.toLowerCase();
+      if (PRESERVE_LEVELS.some(pl => level === pl)) return false;
+    }
     return true;
   }
-  else if (PRESERVE_FILES.length && PRESERVE_FILES.some(filename => metadata.filename.toLowerCase().indexOf(filename) !== -1)) {
-    return true;
-  }
-  else if (PRESERVE_LEVELS.length && PRESERVE_LEVELS.some(level => level === name.toLowerCase())) {
-    return true;
-  }
-  else {
-    return false;
-  }
+  return false;
 }
 
 export function handleLabeledStatement (babel: PluginParams, path: NodePath, opts: PluginOptions): void {
