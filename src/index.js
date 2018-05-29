@@ -15,7 +15,9 @@ type PluginOptions = {
   aliases?: {
     [key: string]: string|Template;
   };
-  strip?: boolean|string|{[key: string]: boolean};
+  strip?: boolean | {
+    [key: string]: boolean | { [key: string]: boolean }
+  };
 };
 
 type LogFunction = (message: Message, metadata: Metadata) => Node;
@@ -245,28 +247,32 @@ function collectMetadata (path: NodePath, opts: PluginOptions): Metadata {
  * Determine whether the given logging statement should be stripped.
  */
 function shouldStrip (name: string, metadata: Metadata, { strip }: PluginOptions): boolean {
-  if (
-    strip && (
-      strip === true ||
-      strip === process.env.NODE_ENV ||
-      strip[process.env.NODE_ENV]
-    )
-  ) {
-    if (PRESERVE_CONTEXTS.length) {
-      const context = metadata.context.toLowerCase();
-      if (PRESERVE_CONTEXTS.some(pc => context.includes(pc))) return false;
-    }
-    if (PRESERVE_FILES.length) {
-      const filename = metadata.filename.toLowerCase();
-      if (PRESERVE_FILES.some(pf => filename.includes(pf))) return false;
-    }
-    if (PRESERVE_LEVELS.length) {
-      const level = name.toLowerCase();
-      if (PRESERVE_LEVELS.some(pl => level === pl)) return false;
-    }
-    return true;
+  switch (typeof strip) {
+    case 'boolean':
+      if (!strip) return false;
+      // strip === true
+      break;
+    case 'object':
+      const se = strip[name];
+      if (!se || (typeof se === 'object' && !se[process.env.NODE_ENV])) return false;
+      // strip[name] === true || strip[name][env] === true
+      break;
+    default:
+      return false;
   }
-  return false;
+  if (PRESERVE_CONTEXTS.length) {
+    const context = metadata.context.toLowerCase();
+    if (PRESERVE_CONTEXTS.some(pc => context.includes(pc))) return false;
+  }
+  if (PRESERVE_FILES.length) {
+    const filename = metadata.filename.toLowerCase();
+    if (PRESERVE_FILES.some(pf => filename.includes(pf))) return false;
+  }
+  if (PRESERVE_LEVELS.length) {
+    const level = name.toLowerCase();
+    if (PRESERVE_LEVELS.some(pl => level === pl)) return false;
+  }
+  return true;
 }
 
 export function handleLabeledStatement (babel: PluginParams, path: NodePath, opts: PluginOptions): void {
