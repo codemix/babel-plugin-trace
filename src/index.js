@@ -18,6 +18,9 @@ type PluginOptions = {
   strip?: boolean|string|{[key: string]: boolean};
 };
 
+type LogFunction = (message: Message, metadata: Metadata) => Node;
+type LogLevel = 'log' | 'warn' | 'error';
+
 type Visitors = {
   [key: string]: Visitor
 };
@@ -105,25 +108,28 @@ function expression (input: string, template: PluginTemplate): Template {
 /**
  * The default log() function.
  */
-export function defaultLog ({ types: t, template }: PluginParams, message: Message, metadata: Metadata): Node {
-  let prefix: string = `${metadata.context}:`;
-  if (metadata.indent) {
-    prefix += (new Array(metadata.indent + 1)).join('  ');
-  }
-  if (t.isSequenceExpression(message.content)) {
-    return t.callExpression(
-      t.memberExpression(
-        t.identifier('console'),
-        t.identifier('log')
-      ),
-      [t.stringLiteral(prefix)].concat(message.content.expressions)
-    );
-  }
-  else {
-    return expression(`console.log(PREFIX, CONTENT)`, template)({
-      PREFIX: t.stringLiteral(prefix),
-      CONTENT: message.content
-    });
+export function getLogFunction ({ types: t, template }: PluginParams, logLevel: LogLevel): LogFunction {
+  return function log (message: Message, metadata: Metadata): Node {
+    let prefix: string = `${metadata.context}:`;
+    if (metadata.indent) {
+      prefix += (new Array(metadata.indent + 1)).join('  ');
+    }
+    if (t.isSequenceExpression(message.content)) {
+      return t.callExpression(
+        t.memberExpression(
+          t.identifier('console'),
+          t.identifier(logLevel)
+        ),
+        [t.stringLiteral(prefix)].concat(message.content.expressions)
+      );
+    }
+    else {
+      return expression(`console.LOGLEVEL(PREFIX, CONTENT)`, template)({
+        LOGLEVEL: t.identifier(logLevel),
+        PREFIX: t.stringLiteral(prefix),
+        CONTENT: message.content
+      });
+    }
   }
 }
 
@@ -135,11 +141,11 @@ function normalizeOpts (babel: PluginParams, opts: PluginOptions): PluginOptions
     return opts;
   }
   if (!opts.aliases) {
-    const log = defaultLog.bind(null, babel);
+    const log = getLogFunction(babel, 'log');
     opts.aliases = {
       log: log,
       trace: log,
-      warn: log
+      warn: getLogFunction(babel, 'warn')
     };
   }
   else {

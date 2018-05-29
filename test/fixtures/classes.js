@@ -6,7 +6,7 @@ class Thing {
       if (true) {
         trace: "qux";
         (() => {
-          trace: "nested";
+          warn: "nested";
         })();
       }
     }
