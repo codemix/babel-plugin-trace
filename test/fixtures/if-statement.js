@@ -1,9 +1,9 @@
 export default function demo () {
-  trace: "hello world";
+  log: "hello world";
   if (Math.random() > 0.5) {
-    trace: "Got result.";
+    log: "Got result.";
   }
   else {
-    trace: "Got result."
+    log: "Got result."
   }
 }

@@ -158,6 +158,13 @@ function normalizeOpts (babel: PluginParams, opts: PluginOptions): PluginOptions
       }
     });
   }
+  if (opts.strip === undefined) {
+    opts.strip = {
+      log: { production: true },
+      trace: true,
+      warn: { production: true }
+    };
+  }
   opts[$normalized] = true;
   return opts;
 }
