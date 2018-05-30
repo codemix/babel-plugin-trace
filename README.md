@@ -25,7 +25,7 @@ async function authenticate (username, password) {
     return false;
   }
   else if (!user.checkPassword(password)) {
-    log: 'invalid password';
+    log: ({ password: 'invalid' })
     return false;
   }
   else if (!user.isActive) {
@@ -91,6 +91,7 @@ As an alternative to use as a plugin, `babel-plugin-trace/macro` is provided for
 import initTrace from 'babel-plugin-trace/macro'
 initTrace()
 log: 'This is', { a: 'message' }
+warn: ({ this: 'a warning' }) // parentheses are required if the first value is an { object }
 ```
 
 To customise the logging labels, import them as named imports of the macro (the default import is still required, as the labels don't really match the imported variable bindings):
@@ -99,14 +100,10 @@ To customise the logging labels, import them as named imports of the macro (the 
 import initTrace, { log, announce } from 'babel-plugin-trace/macro'
 initTrace()
 announce: 'This is', { an: 'announcement' }
+warn: 'This is not logged as a warning'
 ```
 
-Unfortunately the `initTrace` call is required until [kentcdodds/babel-plugin-macros#65](https://github.com/kentcdodds/babel-plugin-macros/pull/65) is merged, after which the API simplifies to:
-
-```js
-import 'babel-plugin-trace/macro'
-log: 'This is', { another: 'message' }
-```
+A source reference to the default export [is required](https://github.com/kentcdodds/babel-plugin-macros/pull/65) to trigger the macro; it will be removed during transpilation.
 
 ## Environment Variables
 
