@@ -1,5 +1,5 @@
 export default function demo () {
-  trace: {
+  log: {
     "hello world";
     "foo bar";
   }

@@ -1,3 +1,3 @@
 export default function demo () {
-  trace: "hello world";
+  log: "hello world";
 }

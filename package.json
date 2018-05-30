@@ -19,6 +19,7 @@
   "keywords": [
     "babel",
     "babel-plugin",
+    "babel-plugin-macros",
     "logging",
     "trace",
     "tracing",
@@ -47,5 +48,8 @@
     "babel-preset-stage-1": "^6.1.0",
     "mocha": "~2.2.4",
     "should": "^6.0.1"
+  },
+  "dependencies": {
+    "babel-plugin-macros": "^2.2.1"
   }
 }

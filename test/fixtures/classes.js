@@ -1,10 +1,10 @@
 class Thing {
   foo () {
-    trace: "foo";
+    log: "foo";
     if (true) {
-      trace: "bar";
+      log: "bar";
       if (true) {
-        trace: "qux";
+        log: "qux";
         (() => {
           warn: "nested";
         })();

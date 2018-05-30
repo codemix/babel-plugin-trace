@@ -1,16 +1,16 @@
 # Babel Plugin: Trace
 
-This is a [Babel](https://babeljs.io/) plugin which adds a straightforward, declarative syntax for adding debug logging to JavaScript applications.
+This is a [Babel](https://babeljs.io/) plugin & macro which adds a straightforward, declarative syntax for adding debug logging to JavaScript applications.
 
 [![Build Status](https://travis-ci.org/codemix/babel-plugin-trace.svg)](https://travis-ci.org/codemix/babel-plugin-trace)
 
-# What?
+## What?
 
 It's common to insert `console.log()` statements to help keep track of the internal state of functions when writing tricky pieces of code. During development this is very useful, but it creates a lot of noise in the console, and when development of that particular piece of code is complete, the developer is likely to delete the `console.log()` calls. If we're lucky, they might leave comments in their place.
 
 This is a tragedy - that logging information is extremely useful, not only is it helpful when fixing bugs, it's a great assistance for new developers (including yourself, 6 months from now) when getting to know a codebase.
 
-This plugin repurposes JavaScript LabeledStatements like `log:` and `trace:` to provide a logging / tracing syntax which can be selectively enabled or disabled at the folder, file, or function level at build time. Normally, these labels are only used as targets for labeled `break` and `continue` statements.
+This plugin repurposes JavaScript [LabeledStatements](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label) like `log:` and `trace:` to provide a logging / tracing syntax which can be selectively enabled or disabled at the folder, file, or function level at build time. Normally, these labels are only used as targets for labeled `break` and `continue` statements.
 
 When disabled in production the logging statements are completely dropped out, incurring no overhead. The syntax looks like this:
 
@@ -18,21 +18,21 @@ When disabled in production the logging statements are completely dropped out, i
 // login.js
 
 async function authenticate (username, password) {
-  trace: 'authenticating user', username;
+  log: 'authenticating user', username;
   const user = await db.select().from('users').where({username: username});
   if (!user) {
-    trace: 'no such user';
+    log: 'no such user';
     return false;
   }
   else if (!user.checkPassword(password)) {
-    trace: 'invalid password';
+    log: ({ password: 'invalid' })
     return false;
   }
   else if (!user.isActive) {
-    trace: 'user is not active';
+    log: 'user is not active';
     return false;
   }
-  trace: 'logging user', username, 'into the site';
+  log: 'logging user', username, 'into the site';
   return true;
 }
 ```
@@ -48,31 +48,33 @@ login:authenticate: authenticating user Alice
 login:authenticate: logging user Alice into the site
 ```
 
-As well as `trace:`, you can also use `log:` and `warn:`, or specify your own using the `aliases` plugin option.
+As well as `log:`, you can also use `trace:` and `warn:`, or specify your own using the `aliases` plugin option. By default all `trace:` logs will be stripped (unless specifically enabled) and `warn:` will use `console.warn` rather than `console.log`.
 
-
-# Installation & Configuration
+## Installation
 
 Install via [npm](https://npmjs.org/package/babel-plugin-trace).
-```sh
+```
 npm install --save-dev babel-plugin-trace
 ```
-Then, in your babel configuration (usually in your `.babelrc` file), add `"trace"` to your list of plugins:
+
+## Plugin Configuration
+
+In your Babel configuration, add `"trace"` to your list of plugins. The default configuration will strip all logging from production builds, as well as trace logging from development and test environment, corresponding to this configuration:
 ```json
 {
   "plugins": [
     ["trace", {
-      "env": {
-        "production": { "strip": true }
+      "strip": {
+        "log": { "production": true },
+        "trace": true,
+        "warn": { "production": true }
       }
     }]
   ]
 }
 ```
 
-The above example configuration will remove all tracing when `NODE_ENV=production`.
-
-Alternatively, you may wish to disable all tracing by default, enabling it only for certain files or functions using environment variables:
+`"strip"` may also take a `true` value to disable all logging by default. In this case you can still enable it for certain files or functions using environment variables:
 ```json
 {
   "plugins": [
@@ -81,8 +83,29 @@ Alternatively, you may wish to disable all tracing by default, enabling it only 
 }
 ```
 
+## Macro Configuration
 
-# Environment Variables
+As an alternative to use as a plugin, `babel-plugin-trace/macro` is provided for use together with [babel-plugin-macros](https://github.com/kentcdodds/babel-plugin-macros). This is relevant in particular if you're working with a [create-react-app](https://github.com/facebook/create-react-app) project, as that does not otherwise allow for Babel plugins to be used. With macro use, you'll need to import the macro in every file where you'd like to enable logging:
+
+```js
+import initTrace from 'babel-plugin-trace/macro'
+initTrace()
+log: 'This is', { a: 'message' }
+warn: ({ this: 'a warning' }) // parentheses are required if the first value is an { object }
+```
+
+To customise the logging labels, import them as named imports of the macro (the default import is still required, as the labels don't really match the imported variable bindings):
+
+```js
+import initTrace, { log, announce } from 'babel-plugin-trace/macro'
+initTrace()
+announce: 'This is', { an: 'announcement' }
+warn: 'This is not logged as a warning'
+```
+
+A source reference to the default export [is required](https://github.com/kentcdodds/babel-plugin-macros/pull/65) to trigger the macro; it will be removed during transpilation.
+
+## Environment Variables
 
 ### `TRACE_LEVEL` - Enable only specific logging levels
 Log only `warn` statements.
@@ -117,8 +140,7 @@ Enable logging for any function in a class called `User`.
 TRACE_CONTEXT=:User: babel -d ./lib ./src
 ```
 
-
-# License
+## License
 
 Published by [codemix](http://codemix.com/) under a permissive MIT License, see [LICENSE.md](./LICENSE.md).
 
